@@ -91,7 +91,6 @@ void DoSharedWork(int childMax) //This is where the magic happens. Forking, and 
 
 	while (1) {
 		pid_t pid; //pid temp
-		int usertracker = -1; //updated by userready to the position of ready struct to be launched
 		if (activeExecs < childcount && remainingExecs > 0)
 		{
 			pid = fork(); //the mircle of proccess creation
@@ -162,9 +161,9 @@ int parsefile(FILE* in) //reads in input file and parses input
 	int i;
 	for (i = 0; i < data->rowcount; i++) //output parse data
 	{
-		printf("%s: PARENT: PARSED: %s\n", filen, rows[i]);
+		printf("%s: PARENT: PARSED: %s\n", filen, data->rows[i]);
 		fflush(stdout);
-	}
+	} 
 }
 
 void timerhandler(int sig) //2 second kill timer
@@ -261,8 +260,8 @@ while ((optionItem = getopt(argc, argv, "h:n")) != -1) //read option list
 		return;
 	}
 
-	parsefile(input); //read file contents		
 	ShmAttatch(); //attach to shared mem
+	parsefile(input); //read file contents		
 		
 	DoSharedWork(19); //do fork/exec fun stuff (20-1 for parent)
 
