@@ -17,17 +17,15 @@
 #include <sys/time.h>
 #include "string.h"
 
-int* cPids; //list of pids
+int cPids[19]; //list of pids
 int ipcid; //inter proccess shared memory
-string rows[500];
+char rows[500][80];
 int rowcount = -1;
+char* filen;
 
 int parsefile(FILE* in) //reads in input file and parses input
 {
-	fscanf(in, "%i", &timerinc); //get iteration count
-	fgetc(in); //eat newline
-
-	char line[100];
+	char line[80];
 
 	printf("%s: PARENT: BEGIN FILE PARSE\n", filen);
 	while (!feof(in)) //keep reading until end of line
@@ -39,15 +37,15 @@ int parsefile(FILE* in) //reads in input file and parses input
 			return 1;
 		}
 
-		char* success = fgets(line, 100, in);
+		fgets(line, 80, in);
 		
-		rows[rowcount] += line;
+		memcpy(&(rows[rowcount][0]), line, 80);
 	}
 	
 	int i;
 	for (i = 0; i < rowcount; i++) //output parse data
 	{
-		printf("%s: PARENT: PARSED: sec: %i, nano %i, offset %i\n", filen, rows[i].seconds, rows[i].nanoseconds, rows[i].arg);
+		printf("%s: PARENT: PARSED: %s\n", filen, rows[i]);
 		fflush(stdout);
 	}
 }
@@ -80,7 +78,7 @@ void handler(int signal) //handle ctrl-c and timer hit
 	fflush(stdout);
 
 	int i;
-	for (i = 0; i < numpids; i++)
+	for (i = 0; i < 19; i++)
 	{
 		if (cPids[i] > 0) //kill all pids just in case
 		{
@@ -131,7 +129,7 @@ int main(int argc, char** argv)
 
 	parsefile(input); //read file contents		
 		
-	DoSharedWork(argv[0], 19); //do fork/exec fun stuff (20-1 for parent)
+	//DoSharedWork(argv[0], 19); //do fork/exec fun stuff (20-1 for parent)
 
 	return 0;
 }
