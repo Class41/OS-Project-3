@@ -20,7 +20,6 @@
 int* cPids; //list of pids
 int ipcid; //inter proccess shared memory
 Shared* data;
-char rows[500][80];
 int numpids;
 int rowcount = -1;
 char* filen;
@@ -156,7 +155,7 @@ int parsefile(FILE* in) //reads in input file and parses input
 		}
 
 		if(fgets(line, 80, in))
-			memcpy(&(rows[rowcount][0]), line, 80);
+			memcpy(&(data->rows[rowcount][0]), line, 80);
 	}
 	
 	int i;
