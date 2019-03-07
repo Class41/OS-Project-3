@@ -19,9 +19,129 @@
 
 int cPids[19]; //list of pids
 int ipcid; //inter proccess shared memory
+Shared* data;
 char rows[500][80];
 int rowcount = -1;
 char* filen;
+
+void DoFork(int value) //do fun fork stuff here. I know, very useful comment.
+{
+	char* convert[15];
+	sprintf(convert, "%i", value); //convert int to char in the most inneficient way possible 
+	char* forkarg[] = {
+			"./palin",
+			convert,
+			NULL
+	}; //null terminated parameter array of chars
+
+	execv(forkarg[0], forkarg); //exec
+	printf("Exec failed! Aborting."); //all is lost. we couldn't fork. Blast.
+	handler(1);
+}
+
+void ShmAttatch()
+{
+	key_t shmkey = ftok("shmshare", 765); //shared mem key
+
+	if (shmkey == -1) //check if the input file exists
+	{
+		printf("\n%s: ", filename);
+		fflush(stdout);
+		perror("Error: Ftok failed");
+		return;
+	}
+
+	ipcid = shmget(shmkey, sizeof(Shared), 0600 | IPC_CREAT); //get shared mem
+
+	if (ipcid == -1) //check if the input file exists
+	{
+		printf("\n%s: ", filename);
+		fflush(stdout);
+		perror("Error: failed to get shared memory");
+		return;
+	}
+
+	data = (Shared*)shmat(ipcid, (void*)0, 0); //attach to shared mem
+
+	if (data == (void*)-1) //check if the input file exists
+	{
+		printf("\n%s: ", filename);
+		fflush(stdout);
+		perror("Error: Failed to attach to shared memory");
+		return;
+	}
+
+	data->rows = new char[500][80];
+}
+
+void DoSharedWork(int childMax) //This is where the magic happens. Forking, and execs be here
+{
+	outfilename = output; //global outpt filename
+	numpids = childMax;  //global pid count
+	cPids = calloc(rowcount, sizeof(int)); //dynamically allocate a array of pids
+
+	int status; //keeps track of status of waited pids
+	//signal(SIGQUIT, handler); //Pull keycombos
+	//signal(SIGINT, handler); //pull keycombos
+	int i; //generic iterator. I call him bob.
+	int remainingExecs = rowcount; 
+	int activeExecs = 0; //how many execs are going right now
+	int exitcount = 0; //how many exits we got
+	int cPidsPos = 0; //wher we are in the cpid array
+	int currentRowLine = 0;
+	//FILE* o = fopen(output, "a"); //open the output file
+
+
+	while (1) {
+		pid_t pid; //pid temp
+		int usertracker = -1; //updated by userready to the position of ready struct to be launched
+		if (activeExecs < 19 && remainingExecs > 0)
+		{
+			pid = fork(); //the mircle of proccess creation
+
+			if (pid < 0) //...or maybe not proccess creation if this executes
+			{
+				perror("Failed to fork, exiting");
+				handler(1);
+			}
+
+			remainingExecs--; //we have less execs now since we launched successfully
+			if (pid == 0)
+			{
+				DoFork(currentRowLine, output); //do the fork thing with exec followup
+			}
+			
+			printf(o, "%s: PARENT: STARTING CHILD %i WITH PARAM %i\n", filen, pid, currentRowLine); //we are parent. We have made child with this value
+			cPids[cPidsPos] = pid; //add pid to pidlist
+			cPidsPos++; //increment pid list
+			activeExecs++; //increment active execs
+			currentRowLine++;
+		}
+
+		if ((pid = waitpid((pid_t)-1, &status, WNOHANG)) > 0) //if a PID is returned
+		{
+			if (WIFEXITED(status))
+			{
+				if (WEXITSTATUS(status) == 21) //21 is my custom return val
+				{
+					exitcount++;
+					activeExecs--;
+					printf("%s: CHILD PID: %i: RIP. fun while it lasted: %i sec %i nano.\n", filen, pid, data->seconds, data->nanoseconds);
+				}
+			}
+		}
+
+		if (exitcount == rowcount && remainingExecs == 0) //only get out of loop if we run out of execs or we have maxed out child count
+			break;
+	}
+
+	printf("((REMAINING: %i)))\n", remainingExecs);
+
+	free(cPids); //free up memory
+	shmdt(data); //detatch from shared mem
+	shmctl(ipcid, IPC_RMID, NULL); //clear shared mem
+	exit(0);
+}
 
 int parsefile(FILE* in) //reads in input file and parses input
 {
@@ -128,8 +248,9 @@ int main(int argc, char** argv)
 	}
 
 	parsefile(input); //read file contents		
+	ShmAttatch(); //attach to shared mem
 		
-	//DoSharedWork(argv[0], 19); //do fork/exec fun stuff (20-1 for parent)
+	DoSharedWork(19); //do fork/exec fun stuff (20-1 for parent)
 
 	return 0;
 }
