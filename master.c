@@ -17,10 +17,11 @@
 #include <sys/time.h>
 #include "string.h"
 
-int cPids[19]; //list of pids
+int* cPids; //list of pids
 int ipcid; //inter proccess shared memory
 Shared* data;
 char rows[500][80];
+int numpids;
 int rowcount = -1;
 char* filen;
 
@@ -45,7 +46,7 @@ void ShmAttatch()
 
 	if (shmkey == -1) //check if the input file exists
 	{
-		printf("\n%s: ", filename);
+		printf("\n%s: ", filen);
 		fflush(stdout);
 		perror("Error: Ftok failed");
 		return;
@@ -55,7 +56,7 @@ void ShmAttatch()
 
 	if (ipcid == -1) //check if the input file exists
 	{
-		printf("\n%s: ", filename);
+		printf("\n%s: ", filen);
 		fflush(stdout);
 		perror("Error: failed to get shared memory");
 		return;
@@ -65,20 +66,17 @@ void ShmAttatch()
 
 	if (data == (void*)-1) //check if the input file exists
 	{
-		printf("\n%s: ", filename);
+		printf("\n%s: ", filen);
 		fflush(stdout);
 		perror("Error: Failed to attach to shared memory");
 		return;
 	}
-
-	data->rows = new char[500][80];
 }
 
 void DoSharedWork(int childMax) //This is where the magic happens. Forking, and execs be here
 {
-	outfilename = output; //global outpt filename
-	numpids = childMax;  //global pid count
-	cPids = calloc(rowcount, sizeof(int)); //dynamically allocate a array of pids
+	numpids = rowcount;  //global pid count
+	cPids = (int*)calloc(rowcount, sizeof(int)); //dynamically allocate a array of pids
 
 	int status; //keeps track of status of waited pids
 	//signal(SIGQUIT, handler); //Pull keycombos
@@ -108,10 +106,10 @@ void DoSharedWork(int childMax) //This is where the magic happens. Forking, and 
 			remainingExecs--; //we have less execs now since we launched successfully
 			if (pid == 0)
 			{
-				DoFork(currentRowLine, output); //do the fork thing with exec followup
+				DoFork(currentRowLine); //do the fork thing with exec followup
 			}
 			
-			printf(o, "%s: PARENT: STARTING CHILD %i WITH PARAM %i\n", filen, pid, currentRowLine); //we are parent. We have made child with this value
+			printf("%s: PARENT: STARTING CHILD %i WITH PARAM %i\n", filen, pid, currentRowLine); //we are parent. We have made child with this value
 			cPids[cPidsPos] = pid; //add pid to pidlist
 			cPidsPos++; //increment pid list
 			activeExecs++; //increment active execs
@@ -126,7 +124,7 @@ void DoSharedWork(int childMax) //This is where the magic happens. Forking, and 
 				{
 					exitcount++;
 					activeExecs--;
-					printf("%s: CHILD PID: %i: RIP. fun while it lasted: %i sec %i nano.\n", filen, pid, data->seconds, data->nanoseconds);
+					printf("%s: CHILD PID: %i: RIP. fun while it lasted.\n", filen, pid);
 				}
 			}
 		}
@@ -157,9 +155,8 @@ int parsefile(FILE* in) //reads in input file and parses input
 			return 1;
 		}
 
-		fgets(line, 80, in);
-		
-		memcpy(&(rows[rowcount][0]), line, 80);
+		if(fgets(line, 80, in))
+			memcpy(&(rows[rowcount][0]), line, 80);
 	}
 	
 	int i;
