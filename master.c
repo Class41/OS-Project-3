@@ -21,8 +21,8 @@ int* cPids; //list of pids
 int ipcid; //inter proccess shared memory
 Shared* data;
 int numpids;
-int rowcount = -1;
 char* filen;
+int childcount = 4;
 
 void DoFork(int value) //do fun fork stuff here. I know, very useful comment.
 {
@@ -74,14 +74,14 @@ void ShmAttatch()
 
 void DoSharedWork(int childMax) //This is where the magic happens. Forking, and execs be here
 {
-	numpids = rowcount;  //global pid count
-	cPids = (int*)calloc(rowcount, sizeof(int)); //dynamically allocate a array of pids
+	numpids = data->rowcount;  //global pid count
+	cPids = (int*)calloc(data->rowcount, sizeof(int)); //dynamically allocate a array of pids
 
 	int status; //keeps track of status of waited pids
 	//signal(SIGQUIT, handler); //Pull keycombos
 	//signal(SIGINT, handler); //pull keycombos
 	int i; //generic iterator. I call him bob.
-	int remainingExecs = rowcount; 
+	int remainingExecs = childcount + 1; 
 	int activeExecs = 0; //how many execs are going right now
 	int exitcount = 0; //how many exits we got
 	int cPidsPos = 0; //wher we are in the cpid array
@@ -92,7 +92,7 @@ void DoSharedWork(int childMax) //This is where the magic happens. Forking, and 
 	while (1) {
 		pid_t pid; //pid temp
 		int usertracker = -1; //updated by userready to the position of ready struct to be launched
-		if (activeExecs < 19 && remainingExecs > 0)
+		if (activeExecs < childcount && remainingExecs > 0)
 		{
 			pid = fork(); //the mircle of proccess creation
 
@@ -128,7 +128,7 @@ void DoSharedWork(int childMax) //This is where the magic happens. Forking, and 
 			}
 		}
 
-		if (exitcount == rowcount && remainingExecs == 0) //only get out of loop if we run out of execs or we have maxed out child count
+		if (exitcount == data->rowcount && remainingExecs == 0) //only get out of loop if we run out of execs or we have maxed out child count
 			break;
 	}
 
@@ -143,23 +143,24 @@ void DoSharedWork(int childMax) //This is where the magic happens. Forking, and 
 int parsefile(FILE* in) //reads in input file and parses input
 {
 	char line[80];
+	data->data->rowcount = -1;
 
 	printf("%s: PARENT: BEGIN FILE PARSE\n", filen);
 	while (!feof(in)) //keep reading until end of line
 	{
-		rowcount++;
-		if (rowcount > 500)
+		data->rowcount++;
+		if (data->rowcount > 500)
 		{
 			printf("%s: PARENT: TOO MANY LINES IN FILE. MAX 500", filen);
 			return 1;
 		}
 
 		if(fgets(line, 80, in))
-			memcpy(&(data->rows[rowcount][0]), line, 80);
+			memcpy(&(data->rows[data->rowcount][0]), line, 80);
 	}
 	
 	int i;
-	for (i = 0; i < rowcount; i++) //output parse data
+	for (i = 0; i < data->rowcount; i++) //output parse data
 	{
 		printf("%s: PARENT: PARSED: %s\n", filen, rows[i]);
 		fflush(stdout);
@@ -226,14 +227,31 @@ int main(int argc, char** argv)
 
 	filen = argv[0]; //shorthand for filename
 	int optionItem; 
-	int childMax = 4; //default
-	int childConcurMax = 2; //default
 
 	FILE* input = fopen("palin.in", "r"); //open input/output files specified
 	FILE* output = fopen("palin.out", "wr");
 	fclose(output);
 	output = fopen("nopalin.out", "wr");
 	fclose(output);
+
+while ((optionItem = getopt(argc, argv, "h:n")) != -1) //read option list
+	{
+		switch (optionItem)
+		{
+		case 'h': //show help menu
+			printf("\t%s Help Menu\n\
+		\t-h : show help dialog \n\
+		\t-n [count] : max children to be created. default: 4\n"
+			return;
+		case 'n': //total # of children
+			childcount = atoi(optarg);
+			printf("\n%s: Info: set max children to: %s", argv[0], optarg);
+			break;
+		case '?': //an error has occoured reading arguments
+			printf("\n%s: Error: Invalid Argument or Arguments missing. Use -h to see usage.", argv[0]);
+			return;
+		}
+	}
 
 	if (input == NULL) //check if the input file exists
 	{
