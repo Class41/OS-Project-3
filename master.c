@@ -81,7 +81,7 @@ void DoSharedWork(int childMax) //This is where the magic happens. Forking, and 
 	//signal(SIGQUIT, handler); //Pull keycombos
 	//signal(SIGINT, handler); //pull keycombos
 	int i; //generic iterator. I call him bob.
-	int remainingExecs = rowcount; 
+	int remainingExecs = rowcount + 1; 
 	int activeExecs = 0; //how many execs are going right now
 	int exitcount = 0; //how many exits we got
 	int cPidsPos = 0; //wher we are in the cpid array
@@ -91,7 +91,6 @@ void DoSharedWork(int childMax) //This is where the magic happens. Forking, and 
 
 	while (1) {
 		pid_t pid; //pid temp
-		int usertracker = -1; //updated by userready to the position of ready struct to be launched
 		if (activeExecs < 19 && remainingExecs > 0)
 		{
 			pid = fork(); //the mircle of proccess creation
@@ -161,9 +160,9 @@ int parsefile(FILE* in) //reads in input file and parses input
 	int i;
 	for (i = 0; i < rowcount; i++) //output parse data
 	{
-		printf("%s: PARENT: PARSED: %s\n", filen, rows[i]);
+		printf("%s: PARENT: PARSED: %s\n", filen, data->rows[i]);
 		fflush(stdout);
-	}
+	} 
 }
 
 void timerhandler(int sig) //2 second kill timer
@@ -243,8 +242,8 @@ int main(int argc, char** argv)
 		return;
 	}
 
-	parsefile(input); //read file contents		
 	ShmAttatch(); //attach to shared mem
+	parsefile(input); //read file contents		
 		
 	DoSharedWork(19); //do fork/exec fun stuff (20-1 for parent)
 
