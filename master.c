@@ -72,16 +72,16 @@ void ShmAttatch()
 	}
 }
 
-void DoSharedWork(int childMax) //This is where the magic happens. Forking, and execs be here
+void DoSharedWork() //This is where the magic happens. Forking, and execs be here
 {
 	numpids = data->rowcount;  //global pid count
-	cPids = (int*)calloc(data->rowcount, sizeof(int)); //dynamically allocate a array of pids
+	cPids = (int*)calloc(childcount, sizeof(int)); //dynamically allocate a array of pids
 
 	int status; //keeps track of status of waited pids
 	//signal(SIGQUIT, handler); //Pull keycombos
 	//signal(SIGINT, handler); //pull keycombos
 	int i; //generic iterator. I call him bob.
-	int remainingExecs = childcount + 1; 
+	int remainingExecs = childcount; 
 	int activeExecs = 0; //how many execs are going right now
 	int exitcount = 0; //how many exits we got
 	int cPidsPos = 0; //wher we are in the cpid array
@@ -104,7 +104,7 @@ void DoSharedWork(int childMax) //This is where the magic happens. Forking, and 
 			remainingExecs--; //we have less execs now since we launched successfully
 			if (pid == 0)
 			{
-				DoFork(currentRowLine); //do the fork thing with exec followup
+				DoFork(currentRowLine * 5); //do the fork thing with exec followup
 			}
 			
 			printf("%s: PARENT: STARTING CHILD %i WITH PARAM %i\n", filen, pid, currentRowLine); //we are parent. We have made child with this value
@@ -127,7 +127,7 @@ void DoSharedWork(int childMax) //This is where the magic happens. Forking, and 
 			}
 		}
 
-		if (exitcount == data->rowcount && remainingExecs == 0) //only get out of loop if we run out of execs or we have maxed out child count
+		if (exitcount == childcount && remainingExecs == 0) //only get out of loop if we run out of execs or we have maxed out child count
 			break;
 	}
 
@@ -142,7 +142,7 @@ void DoSharedWork(int childMax) //This is where the magic happens. Forking, and 
 int parsefile(FILE* in) //reads in input file and parses input
 {
 	char line[80];
-	data->data->rowcount = -1;
+	data->rowcount = -1;
 
 	printf("%s: PARENT: BEGIN FILE PARSE\n", filen);
 	while (!feof(in)) //keep reading until end of line
@@ -150,7 +150,7 @@ int parsefile(FILE* in) //reads in input file and parses input
 		data->rowcount++;
 		if (data->rowcount > 500)
 		{
-			printf("%s: PARENT: TOO MANY LINES IN FILE. MAX 500", filen);
+			printf("%s: PARENT: TOO MANY LINES IN FILE. MAX 500\n", filen);
 			return 1;
 		}
 
@@ -161,7 +161,7 @@ int parsefile(FILE* in) //reads in input file and parses input
 	int i;
 	for (i = 0; i < data->rowcount; i++) //output parse data
 	{
-		printf("%s: PARENT: PARSED: %s\n", filen, data->rows[i]);
+		printf("%s: PARENT: PARSED: %s", filen, data->rows[i]);
 		fflush(stdout);
 	} 
 }
@@ -194,7 +194,7 @@ void handler(int signal) //handle ctrl-c and timer hit
 	fflush(stdout);
 
 	int i;
-	for (i = 0; i < 19; i++)
+	for (i = 0; i < childcount; i++)
 	{
 		if (cPids[i] > 0) //kill all pids just in case
 		{
@@ -233,17 +233,19 @@ int main(int argc, char** argv)
 	output = fopen("nopalin.out", "wr");
 	fclose(output);
 
-while ((optionItem = getopt(argc, argv, "h:n")) != -1) //read option list
+while ((optionItem = getopt(argc, argv, "hn:")) != -1) //read option list
 	{
 		switch (optionItem)
 		{
 		case 'h': //show help menu
 			printf("\t%s Help Menu\n\
 		\t-h : show help dialog \n\
-		\t-n [count] : max children to be created. default: 4\n"
+		\t-n [count] : max children to be created. default: 4\n");
 			return;
 		case 'n': //total # of children
 			childcount = atoi(optarg);
+			if(childcount > 20)
+				childcount = 20;
 			printf("\n%s: Info: set max children to: %s", argv[0], optarg);
 			break;
 		case '?': //an error has occoured reading arguments
@@ -263,7 +265,7 @@ while ((optionItem = getopt(argc, argv, "h:n")) != -1) //read option list
 	ShmAttatch(); //attach to shared mem
 	parsefile(input); //read file contents		
 		
-	DoSharedWork(19); //do fork/exec fun stuff (20-1 for parent)
+	DoSharedWork(); //do fork/exec fun stuff (20-1 for parent)
 
 	return 0;
 }
