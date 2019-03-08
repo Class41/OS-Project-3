@@ -30,6 +30,7 @@ void WritePalin(int pos)
 	FILE* o = fopen("palin.out", "a");
 	fprintf(o, "%i\t%i\t%s", getpid(), pos, data->rows[pos]);
 	fclose(o);
+	sem_post(&(data->pal));
 }
 
 void WriteNonPalin(int pos)
@@ -38,6 +39,7 @@ void WriteNonPalin(int pos)
 	FILE* o = fopen("nopalin.out", "a");
 	fprintf(o, "%i\t%i\t%s", getpid(), pos, data->rows[pos]);
 	fclose(o);
+	sem_post(&(data->nopal));
 }
 
 int PalinCheck(int pos)
@@ -47,10 +49,10 @@ int PalinCheck(int pos)
 
 	while (len > left)
 	{
-		printf("\nComparing %i to %i %c to %c\n", len, left, data->rows[pos][len], data->rows[pos][left]);
+		//printf("\nComparing %i to %i %c to %c\n", len, left, data->rows[pos][len], data->rows[pos][left]);
 		if (data->rows[pos][len--] != data->rows[pos][left++])
 		{
-			printf("FAIL %s", data->rows[pos]);
+			//printf("FAIL %s", data->rows[pos]);
 			return 0;
 		}
 
@@ -107,11 +109,6 @@ int main(int argc, char** argv)
 		else
 			WriteNonPalin(i);
 	}
-
-
-
-
-	printf("Running! %s\n", argv[1]);
 
 	SetExit();
 	return 0;

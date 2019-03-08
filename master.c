@@ -16,6 +16,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "string.h"
+#include <sys/types.h>
 
 int* cPids; //list of pids
 int ipcid; //inter proccess shared memory
@@ -70,6 +71,9 @@ void ShmAttatch()
 		perror("Error: Failed to attach to shared memory");
 		return;
 	}
+
+	sem_init(&(data->pal), 1, 1);
+	sem_init(&(data->nopal), 1, 1);
 }
 
 void DoSharedWork() //This is where the magic happens. Forking, and execs be here
