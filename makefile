@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g
+CFLAGS = -g -pthread
 TARGET1 = master
 TARGET2 = palin
 OBJS1 = master.o
