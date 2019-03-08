@@ -24,6 +24,7 @@ void SetExit()
 
 void WritePalin(int pos)
 {
+	sem_wait(&(data->pal));
 	FILE* o = fopen("palin.out", "a");
 	fprintf(o, "%i\t%i\t%s", getpid(), pos, data->rows[pos]);
 	fclose(o);
@@ -31,6 +32,7 @@ void WritePalin(int pos)
 
 void WriteNonPalin(int pos)
 {
+	sem_wait(&(data->nopal));
 	FILE* o = fopen("nopalin.out", "a");
 	fprintf(o, "%i\t%i\t%s", getpid(), pos, data->rows[pos]);
 	fclose(o);
