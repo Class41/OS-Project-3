@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "shared.h"
+#include "semaphore.h"
+#include <sys/ipc.h> 
+#include <sys/shm.h> 
 
 int ipcid;
 Shared* data;
@@ -14,22 +17,44 @@ Shared* data;
 
 void SetExit()
 {
-		shmdt(data);
-		exit(21);
+	shmdt(data);
+	exit(21);
 }
 
-void WritePalin()
+void WritePalin(int pos)
 {
-
+	FILE* o = fopen("palin.out", "a");
+	fprintf(o, "%i\t%i\t%s", getpid(), pos, data->rows[pos]);
+	fclose(o);
 }
 
-void WriteNonPalin()
+void WriteNonPalin(int pos)
 {
-	
+	FILE* o = fopen("nopalin.out", "a");
+	fprintf(o, "%i\t%i\t%s", getpid(), pos, data->rows[pos]);
+	fclose(o);
 }
 
-int PalinCheck()
+int PalinCheck(int pos)
 {
+	int len = 0;
+
+	while (data->rows[pos][len] != '\0')
+	{
+		len++;
+	}
+
+	len--;
+
+	int l;
+
+	while (l < len)
+	{
+		if (data->rows[pos][len--] != data->rows[pos][l++])
+		{
+			return 0;
+		}
+	}
 	return 1;
 }
 
@@ -73,17 +98,17 @@ int main(int argc, char** argv)
 	int i;
 	for (i = 0; i < 5; i++)
 	{
-		if(data->rowcount + i < atoi(argv[1]))
+		if (data->rowcount + i < atoi(argv[1]))
 			SetExit();
-		
-		if(PalinCheck())
-			WritePalin();
+
+		if (PalinCheck(i))
+			WritePalin(i);
 		else
-			WriteNonPalin();
+			WriteNonPalin(i);
 	}
 
 
-	
+
 
 	printf("Running! %s\n", argv[1]);
 
