@@ -186,7 +186,7 @@ int setupinterrupt() //setup interrupt handling
 int setuptimer() //setup timer handling
 {
 	struct itimerval value;
-	value.it_interval.tv_sec = 2;
+	value.it_interval.tv_sec = 25;
 	value.it_interval.tv_usec = 0;
 	value.it_value = value.it_interval;
 	return (setitimer(ITIMER_PROF, &value, NULL));
