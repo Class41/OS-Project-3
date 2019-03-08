@@ -10,10 +10,11 @@
 #include "semaphore.h"
 #include <sys/ipc.h> 
 #include <sys/shm.h> 
+#include <string.h>
 
 int ipcid;
 Shared* data;
-
+char* filen;
 
 void SetExit()
 {
@@ -37,23 +38,18 @@ void WriteNonPalin(int pos)
 
 int PalinCheck(int pos)
 {
-	int len = 0;
+	int len = strlen(data->rows[pos]) - 2;
+	int left = 0;
 
-	while (data->rows[pos][len] != '\0')
+	while (len > left)
 	{
-		len++;
-	}
-
-	len--;
-
-	int l;
-
-	while (l < len)
-	{
-		if (data->rows[pos][len--] != data->rows[pos][l++])
+		printf("\nComparing %i to %i %c to %c\n", len, left, data->rows[pos][len], data->rows[pos][left]);
+		if (data->rows[pos][len--] != data->rows[pos][left++])
 		{
+			printf("FAIL %s", data->rows[pos]);
 			return 0;
 		}
+
 	}
 	return 1;
 }
@@ -93,12 +89,13 @@ void ShmAttatch()
 
 int main(int argc, char** argv)
 {
+	filen = argv[0];
 	ShmAttatch();
 
 	int i;
-	for (i = 0; i < 5; i++)
+	for (i = atoi(argv[1]); i < atoi(argv[1]) + 5; i++)
 	{
-		if (data->rowcount + i < atoi(argv[1]))
+		if (data->rowcount < i + 1)
 			SetExit();
 
 		if (PalinCheck(i))
