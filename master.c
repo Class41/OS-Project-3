@@ -249,7 +249,11 @@ while ((optionItem = getopt(argc, argv, "hn:")) != -1) //read option list
 		case 'n': //total # of children
 			childcount = atoi(optarg);
 			if(childcount > 20)
-				childcount = 20;
+			{
+				printf("%s: Max -n is 20. Aborting.\n", argv[0]);
+				return -1;					
+			}
+
 			printf("\n%s: Info: set max children to: %s", argv[0], optarg);
 			break;
 		case '?': //an error has occoured reading arguments

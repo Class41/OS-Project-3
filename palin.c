@@ -33,6 +33,7 @@ void WritePalin(int pos)
 	FILE* o = fopen("palin.out", "a");
 	fprintf(o, "%i\t%i\t%s", getpid(), pos, data->rows[pos]);
 	fclose(o);
+	sleep(rand() % 3);
 	fprintf(stderr, "[EXIT -> pid %i] [%i] palindrome section\n", getpid(), time(NULL));
 	sem_post(&(data->pal));
 }
@@ -45,6 +46,7 @@ void WriteNonPalin(int pos)
 	FILE* o = fopen("nopalin.out", "a");
 	fprintf(o, "%i\t%i\t%s", getpid(), pos, data->rows[pos]);
 	fclose(o);
+	sleep(rand() % 3);
 	fprintf(stderr, "[EXIT -> pid %i] [%i] non-palindrome section.\n", getpid(), time(NULL));
 	sem_post(&(data->nopal));
 }
