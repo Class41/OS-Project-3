@@ -20,16 +20,16 @@
 
 int* cPids; //list of pids
 int ipcid; //inter proccess shared memory
-Shared* data;
-int numpids;
-char* filen;
-int childcount = 4;
+Shared* data; //shared memory data
+int numpids; //size of cPids
+char* filen; //name of this executable
+int childcount = 4; //max children. 4 default
 
 void DoFork(int value) //do fun fork stuff here. I know, very useful comment.
 {
 	char* convert[15];
 	sprintf(convert, "%i", value); //convert int to char in the most inneficient way possible 
-	char* forkarg[] = {
+	char* forkarg[] = { //null terminated args set
 			"./palin",
 			convert,
 			NULL
@@ -40,7 +40,7 @@ void DoFork(int value) //do fun fork stuff here. I know, very useful comment.
 	handler(1);
 }
 
-void ShmAttatch()
+void ShmAttatch() //attach to shared memory
 {
 	key_t shmkey = ftok("shmshare", 765); //shared mem key
 
@@ -72,8 +72,8 @@ void ShmAttatch()
 		return;
 	}
 
-	sem_init(&(data->pal), 1, 1);
-	sem_init(&(data->nopal), 1, 1);
+	sem_init(&(data->pal), 1, 1); //initiate palindrome file semaphore
+	sem_init(&(data->nopal), 1, 1); //initiate non-palindrome file semaphore
 }
 
 void DoSharedWork() //This is where the magic happens. Forking, and execs be here
@@ -159,18 +159,18 @@ int parsefile(FILE* in) //reads in input file and parses input
 		}
 
 		if(fgets(line, 80, in))
-			memcpy(&(data->rows[data->rowcount][0]), line, 80);
+			memcpy(&(data->rows[data->rowcount][0]), line, 80); //After we read in the line from file, we need to copy the NTCA to the rows array
 	}
 	
 	int i;
 	for (i = 0; i < data->rowcount; i++) //output parse data
 	{
-		printf("%s: PARENT: PARSED: %s", filen, data->rows[i]);
+		printf("%s: PARENT: PARSED: %s", filen, data->rows[i]); //print parsed data
 		fflush(stdout);
 	} 
 }
 
-void timerhandler(int sig) //2 second kill timer
+void timerhandler(int sig) //25 second kill timer
 {
 	handler(sig);
 }
@@ -231,8 +231,8 @@ int main(int argc, char** argv)
 	filen = argv[0]; //shorthand for filename
 	int optionItem; 
 
-	FILE* input = fopen("palin.in", "r"); //open input/output files specified
-	FILE* output = fopen("palin.out", "wr");
+	FILE* input = fopen("palin.in", "r"); //open input/output files
+	FILE* output = fopen("palin.out", "wr"); //open both output files to create them for the next part
 	fclose(output);
 	output = fopen("nopalin.out", "wr");
 	fclose(output);
@@ -248,7 +248,7 @@ while ((optionItem = getopt(argc, argv, "hn:")) != -1) //read option list
 			return;
 		case 'n': //total # of children
 			childcount = atoi(optarg);
-			if(childcount > 20)
+			if(childcount > 20) //if n > 20
 			{
 				printf("%s: Max -n is 20. Aborting.\n", argv[0]);
 				return -1;					
