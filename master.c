@@ -25,6 +25,8 @@ int numpids; //size of cPids
 char* filen; //name of this executable
 int childcount = 4; //max children. 4 default
 
+void handler(int); //prototype for the handler
+
 void DoFork(int value) //do fun fork stuff here. I know, very useful comment.
 {
 	char* convert[15];
@@ -92,6 +94,8 @@ void DoSharedWork() //This is where the magic happens. Forking, and execs be her
 	int currentRowLine = 0;
 	//FILE* o = fopen(output, "a"); //open the output file
 
+	signal(SIGQUIT, handler);
+ 	signal(SIGINT, handler);	
 
 	while (1) {
 		pid_t pid; //pid temp
@@ -169,6 +173,7 @@ int parsefile(FILE* in) //reads in input file and parses input
 		fflush(stdout);
 	} 
 }
+
 
 void timerhandler(int sig) //25 second kill timer
 {
