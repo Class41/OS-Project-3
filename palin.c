@@ -27,8 +27,9 @@ void SetExit() //universal exit function
 
 void WritePalin(int pos) //if palindrome, this function will be called
 {
-	fprintf(stderr, "[ENTER -> pid %i] [%i] palindrome section.\n", getpid(), time(NULL));
+	fprintf(stderr, "[WAIT -> pid %i] [%i] palindrome section.\n", getpid(), time(NULL));
 	sem_wait(&(data->pal)); //lock out any other proccess from entering the critical section
+	fprintf(stderr, "[ENTER -> pid %i] [%i] palindrome section.\n", getpid(), time(NULL));	
 	sleep(rand() % 3); //sleep from 0 - 3 sec
 	FILE* o = fopen("palin.out", "a"); //open file
 	fprintf(o, "%i\t%i\t%s", getpid(), pos, data->rows[pos]); //write palin to file
@@ -40,8 +41,9 @@ void WritePalin(int pos) //if palindrome, this function will be called
 
 void WriteNonPalin(int pos) //if non-palindrome, this function will be called
 {
-	fprintf(stderr, "[ENTER -> pid %i] [%i] non-palindrome section.\n", getpid(), time(NULL));
+	fprintf(stderr, "[WAIT -> pid %i] [%i] non-palindrome section.\n", getpid(), time(NULL));
 	sem_wait(&(data->nopal)); //lock out any other proccess from entering the critical section
+	fprintf(stderr, "[ENTER -> pid %i] [%i] non-palindrome section.\n", getpid(), time(NULL));	
 	sleep(rand() % 3); //sleep from 0 - 3 sec
 	FILE* o = fopen("nopalin.out", "a"); //open file
 	fprintf(o, "%i\t%i\t%s", getpid(), pos, data->rows[pos]); //write nonpalin to file
