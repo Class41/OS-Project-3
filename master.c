@@ -24,6 +24,7 @@ Shared* data; //shared memory data
 int numpids; //size of cPids
 char* filen; //name of this executable
 int childcount = 4; //max children. 4 default
+char* inputName;
 
 void handler(int); //prototype for the handler
 
@@ -94,7 +95,7 @@ void DoSharedWork() //This is where the magic happens. Forking, and execs be her
 	int currentRowLine = 0;
 	//FILE* o = fopen(output, "a"); //open the output file
 
-	signal(SIGQUIT, handler);
+	//signal(SIGQUIT, handler);
  	signal(SIGINT, handler);	
 
 	while (1) {
@@ -236,36 +237,43 @@ int main(int argc, char** argv)
 	filen = argv[0]; //shorthand for filename
 	int optionItem; 
 
-	FILE* input = fopen("palin.in", "r"); //open input/output files
-	FILE* output = fopen("palin.out", "wr"); //open both output files to create them for the next part
-	fclose(output);
-	output = fopen("nopalin.out", "wr");
-	fclose(output);
-
-while ((optionItem = getopt(argc, argv, "hn:")) != -1) //read option list
+	inputName = calloc(50, sizeof(char));
+	strcpy(inputName, "palin.in");
+while ((optionItem = getopt(argc, argv, "hn:f:")) != -1) //read option list
 	{
 		switch (optionItem)
 		{
 		case 'h': //show help menu
 			printf("\t%s Help Menu\n\
 		\t-h : show help dialog \n\
-		\t-n [count] : max children to be created. default: 4\n");
+		\t-n [count] : max children to be created. default: 4\n\
+		\t-f [filename] : sets the input filename. Default: palin.in\n");
 			return;
 		case 'n': //total # of children
 			childcount = atoi(optarg);
-			if(childcount > 20) //if n > 20
+			if(childcount > 20 || childcount < 0) //if 0  > n > 20 
 			{
-				printf("%s: Max -n is 20. Aborting.\n", argv[0]);
+				printf("%s: Max -n is 20. Must be > 0 Aborting.\n", argv[0]);
 				return -1;					
 			}
 
 			printf("\n%s: Info: set max children to: %s", argv[0], optarg);
+			break;
+		case 'f': //input filename
+				strcpy(inputName, optarg);	
 			break;
 		case '?': //an error has occoured reading arguments
 			printf("\n%s: Error: Invalid Argument or Arguments missing. Use -h to see usage.", argv[0]);
 			return;
 		}
 	}
+
+	FILE* input = fopen(inputName, "r"); //open input/output files
+	FILE* output = fopen("palin.out", "wr"); //open both output files to create them for the next part
+	fclose(output);
+	output = fopen("nopalin.out", "wr");
+	fclose(output);
+
 
 	if (input == NULL) //check if the input file exists
 	{
